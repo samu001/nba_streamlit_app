@@ -70,7 +70,7 @@ if selectedTab == "Map":
                     get_position='[longitude, latitude]',
                     get_color='[201, 8, 42, 160]',
                     radiusScale=300,
-                    radius_min_pixels=1,
+                    radius_min_pixels=5,
                     radius_max_pixels=100,
                     get_radius=50,
                     pickable=True,
