@@ -39,8 +39,8 @@ if selectedTab == "Standings":
     wins = []
     losses = []
     winStreak = []
+    teamImage = []
 
-    # Season Selector
     selectedSeason = st.selectbox(
         'Select Season',
         ('2022', '2021', '2020', '2019', '2018'),
@@ -55,9 +55,7 @@ if selectedTab == "Standings":
     with st.spinner('Fetching Data...'):
         # Call API when user selects a new season, Get the response and convert it to Json
         response = requests.request \
-            ("GET", url, headers=headers,
-             params={"league": "standard", "season": selectedSeason, "conference": conference}).json()
-        # Put response array on data
+            ("GET", url, headers=headers, params={"league": "standard", "season": selectedSeason, "conference": conference}).json()
         data = response['response']
 
         # Distribute the data to use on the Table
@@ -77,7 +75,7 @@ if selectedTab == "Standings":
                 "Team Name": teamNames,
                 "Wins": wins,
                 "Losses": losses,
-                "Win Streak": winStreak
+                "Win Streak": winStreak,
             }
         )
         st.dataframe(teams)
@@ -92,11 +90,9 @@ if selectedTab == "Standings":
         )
         st.bar_chart(teamsBarChart)
 
-
 elif selectedTab == "Map":
     col1, col2 = st.columns(2, gap='small')
 
-    # teamLocations = pd.read_csv('media/NBA_arena_coordinates.csv')
     with col1:
         st.subheader("Team List")
         # Read csv file
@@ -112,11 +108,8 @@ elif selectedTab == "Map":
         zoom_long = teamLocations["longitude"].mean()
 
         st.pydeck_chart(pdk.Deck(
-            # map_style https://docs.mapbox.com/api/maps/styles/
             map_style='mapbox://styles/mapbox/satellite-streets-v11',
             initial_view_state=pdk.ViewState(
-                # latitude=39.50,
-                # longitude=-98.35,
                 latitude=zoom_lat,
                 longitude=zoom_long,
                 zoom=3,
@@ -145,19 +138,21 @@ elif selectedTab == "Map":
             }
         ))
 
-
 elif selectedTab == "Team Stats":
     st.subheader("Team Stats")
 
-    # Get all the teams Data
+    # Request the Data and turn it to Json
     res = requests.request \
-        ("GET", "https://api-nba-v1.p.rapidapi.com/standings", headers=headers,
-         params={"league": "standard", "season": "2021"}).json()
+        ("GET", "https://api-nba-v1.p.rapidapi.com/standings", headers=headers, params={"league": "standard", "season": "2021"}).json()
     data = res['response']
 
+    # Teams Data
     teamNames = []
     teamId = []
     teamImage = []
+    teamSeasons = [2018, 2019, 2020, 2021, 2022]   # Seasons allowed by the API
+    teamWins = []
+
     for i in range(0, len(data), 1):
         teamNames.append(data[i]['team']['name'])
         teamId.append(data[i]['team']['id'])
@@ -174,10 +169,6 @@ elif selectedTab == "Team Stats":
         id = 20
     elif id == 13:
         id = 7
-
-    # Seasons allowed by the API
-    teamSeasons = [2018, 2019, 2020, 2021, 2022]
-    teamWins = []
 
     with st.spinner('Fetching Data...'):
         for season in teamSeasons:
@@ -197,7 +188,7 @@ elif selectedTab == "Team Stats":
 
         st.info('Season 2022 win totals are not final', icon="ℹ")
 
-
+# Find your Team Tab
 else:
     st.subheader("Find Your Team")
     favTeam = ""
