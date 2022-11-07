@@ -28,9 +28,7 @@ with col1:
 with col2:
     st.image("media/The_NBA_Wire app logo.jpeg", width=140)
 
-selectedTab = st.sidebar.selectbox("Select a page",
-                                   ["Standings", "Map", "Team Stats", "Find Your Team"]
-                                   )
+selectedTab = st.sidebar.selectbox("Select a page", ["Standings", "Map", "Team Stats", "Find Your Team"])
 
 if selectedTab == "Standings":
     st.subheader("Standings")
@@ -40,17 +38,11 @@ if selectedTab == "Standings":
     losses = []
     winStreak = []
     teamImage = []
+    winPct = []
 
-    selectedSeason = st.selectbox(
-        'Select Season',
-        ('2022', '2021', '2020', '2019', '2018'),
-        index=1
-    )
+    selectedSeason = st.selectbox('Select Season', ('2022', '2021', '2020', '2019', '2018'), index=1 )
 
-    conference = st.radio(
-        "Select Conference",
-        ("East", "West")
-    )
+    conference = st.radio( "Select Conference", ("East", "West"))
 
     with st.spinner('Fetching Data...'):
         # Call API when user selects a new season, Get the response and convert it to Json
@@ -66,8 +58,9 @@ if selectedTab == "Standings":
             else:
                 winStreak.append("0")
             teamNames.append(data[i]['team']['name'])
-            wins.append(data[i]['conference']['win'])
-            losses.append(data[i]['conference']['loss'])
+            wins.append(data[i]['win']['total'])
+            losses.append(data[i]['loss']['total'])
+            winPct.append(data[i]['win']['percentage'])
 
         # Construct the Standings Table
         teams = pd.DataFrame(
@@ -76,6 +69,7 @@ if selectedTab == "Standings":
                 "Wins": wins,
                 "Losses": losses,
                 "Win Streak": winStreak,
+                "Win Percentage": winPct
             }
         )
         st.dataframe(teams)
@@ -106,9 +100,15 @@ elif selectedTab == "Map":
         st.subheader("Map")
         zoom_lat = teamLocations["latitude"].mean()
         zoom_long = teamLocations["longitude"].mean()
+        satelliteView = st.checkbox("Satellite View", value=True)
+
+        if satelliteView:
+            mapStyle = 'mapbox://styles/mapbox/satellite-streets-v11'
+        else:
+            mapStyle = 'mapbox://styles/mapbox/light-v10'
 
         st.pydeck_chart(pdk.Deck(
-            map_style='mapbox://styles/mapbox/satellite-streets-v11',
+            map_style=mapStyle,
             initial_view_state=pdk.ViewState(
                 latitude=zoom_lat,
                 longitude=zoom_long,
@@ -138,6 +138,7 @@ elif selectedTab == "Map":
             }
         ))
 
+# Team Statistics Tab
 elif selectedTab == "Team Stats":
     st.subheader("Team Stats")
 
@@ -158,10 +159,10 @@ elif selectedTab == "Team Stats":
         teamId.append(data[i]['team']['id'])
         teamImage.append(data[i]['team']['logo'])
 
+    # Get the index of the selected item
     index = st.selectbox("Select a Team", range(len(teamNames)), format_func=lambda x: teamNames[x])
     # ID for the API
     id = index + 1
-    # Index of the item should also be the index of teamImage array
     st.image(teamImage[index], width=150)
 
     # Bug on the api
@@ -193,11 +194,19 @@ else:
     st.subheader("Find Your Team")
     favTeam = ""
 
+    col1, col2 = st.columns(2)
+    with col1:
+        name = st.text_input('Enter your name')
+    with col2:
+        age = st.number_input('Enter your age', value=18, max_value=100, min_value=1)
+
     skill = st.radio(
         "What do you prefer?",
         key="skill",
         options=["Dunks", "Three Pointers", "Dribbling"],
     )
+
+    likesFun = st.checkbox("Do you like fun!?")
 
     teamType = st.radio(
         "In a movie you would like your team to be",
@@ -208,7 +217,7 @@ else:
     beachSlider = st.slider('From 1 to 5. How much would you enjoy an afternoon at the beach?', 0, 5, 2)
 
     # Options for the quiz
-    if 4 <= beachSlider <= 5:
+    if 4 <= beachSlider <= 5 and likesFun:
         if skill == "Dunks":
             if teamType == "Underdogs":
                 favTeam = "Houston Rockets"
@@ -235,11 +244,17 @@ else:
         else:
             favTeam = "Brooklyn Nets"
     else:
-        if teamType == "Underdogs":
-            favTeam = "Chicago Bulls"
+        if age > 26 and likesFun:
+            if teamType == "Underdogs":
+                favTeam = "Chicago Bulls"
+            else:
+                favTeam = "Atlanta Hawks"
         else:
-            favTeam = "Atlanta Hawks"
+            if skill == "Dunks":
+                favTeam = "Orlando Magic"
+            else:
+                favTeam = "Indiana Pacers"
 
     if st.button('Finish Quiz'):
         st.success('Quiz Completed!', icon="✅")
-        st.write("Your Favorite Team should be the", favTeam)
+        st.write("Congrats", name, "!   Your Favorite Team should be the", favTeam)
