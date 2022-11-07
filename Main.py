@@ -206,8 +206,6 @@ else:
         options=["Dunks", "Three Pointers", "Dribbling"],
     )
 
-    likesFun = st.checkbox("Do you like fun!?")
-
     teamType = st.radio(
         "In a movie you would like your team to be",
         key="teamType",
@@ -217,7 +215,7 @@ else:
     beachSlider = st.slider('From 1 to 5. How much would you enjoy an afternoon at the beach?', 0, 5, 2)
 
     # Options for the quiz
-    if 4 <= beachSlider <= 5 and likesFun:
+    if 4 <= beachSlider <= 5:
         if skill == "Dunks":
             if teamType == "Underdogs":
                 favTeam = "Houston Rockets"
@@ -244,7 +242,7 @@ else:
         else:
             favTeam = "Brooklyn Nets"
     else:
-        if age > 26 and likesFun:
+        if age > 26:
             if teamType == "Underdogs":
                 favTeam = "Chicago Bulls"
             else:
