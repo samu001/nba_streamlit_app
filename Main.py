@@ -4,26 +4,24 @@ import numpy as np
 import requests
 import pydeck as pdk
 
-# General Page Configuration
-st.set_page_config(
-    page_title="The NBA Wire",
-    layout="wide",
-    menu_items={
-        'Get Help': 'https://docs.streamlit.io/',
-        'Report a bug': 'https://docs.streamlit.io',
-        'About': '#An app created by Samuel Perez, Vanya Farzamipour and Samuel Gras'
-    }
-)
-
-# API Configuration
 url = "https://api-nba-v1.p.rapidapi.com/standings"
+
 headers = {
     "X-RapidAPI-Key": "a60722f048mshde48ca0c6a9d0d8p1099d4jsn973fd638ca0b",
     "X-RapidAPI-Host": "api-nba-v1.p.rapidapi.com"
 }
 
+# General Page Configuration
+st.set_page_config(
+    page_title="The NBA Wire",
+    layout="wide",
+    menu_items={
+        'Get Help': 'https://docs.streamlit.io/streamlit-cloud/troubleshooting',
+        'Report a bug': 'https://docs.streamlit.io',
+        'About': '#An app created by Samuel Perez, Vanya Farzamipour and Samuel Gras'
+    }
+)
 
-# App title and logo
 col1, col2 = st.columns(2, gap="small")
 with col1:
     st.title("The NBA Wire")
@@ -32,10 +30,9 @@ with col2:
 
 selectedTab = st.sidebar.selectbox("Select a page", ["Standings", "Map", "Team Stats", "Find Your Team"])
 
-# Season Standings Section
 if selectedTab == "Standings":
     st.subheader("Standings")
-    # Data for the tables
+    # Arrays for each data set
     teamNames = []
     wins = []
     losses = []
@@ -43,8 +40,9 @@ if selectedTab == "Standings":
     teamImage = []
     winPct = []
 
-    selectedSeason = st.selectbox('Select Season', ('2022', '2021', '2020', '2019', '2018'), index=1)
-    conference = st.radio("Select Conference", ("East", "West"))
+    selectedSeason = st.selectbox('Select Season', ('2022', '2021', '2020', '2019', '2018'), index=1 )
+
+    conference = st.radio( "Select Conference", ("East", "West"))
 
     with st.spinner('Fetching Data...'):
         # Call API when user selects a new season, Get the response and convert it to Json
@@ -86,7 +84,6 @@ if selectedTab == "Standings":
         )
         st.bar_chart(teamsBarChart)
 
-# Franchise Map Section
 elif selectedTab == "Map":
     col1, col2 = st.columns(2, gap='small')
 
@@ -141,7 +138,7 @@ elif selectedTab == "Map":
             }
         ))
 
-# Team Statistics Section
+# Team Statistics Tab
 elif selectedTab == "Team Stats":
     st.subheader("Team Stats")
 
@@ -150,29 +147,26 @@ elif selectedTab == "Team Stats":
         ("GET", "https://api-nba-v1.p.rapidapi.com/standings", headers=headers, params={"league": "standard", "season": "2021"}).json()
     data = res['response']
 
-    # Data for the tables
+    # Teams Data
     teamNames = []
     teamId = []
     teamImage = []
     teamSeasons = [2018, 2019, 2020, 2021, 2022]   # Seasons allowed by the API
     teamWins = []
+    teamPlayers = []
 
     for i in range(0, len(data), 1):
         teamNames.append(data[i]['team']['name'])
         teamId.append(data[i]['team']['id'])
         teamImage.append(data[i]['team']['logo'])
 
-    teamNames.sort()
-
     # Get the index of the selected item
     index = st.selectbox("Select a Team", range(len(teamNames)), format_func=lambda x: teamNames[x])
-
-
-    # ID for the API call
+    # ID for the API
     id = index + 1
-    st.image(teamImage[index], width=150)
+    #st.image(teamImage[index], width=150)
 
-    # Bug on the API
+    # Bug on the api
     if id == 3:
         id = 20
     elif id == 13:
@@ -186,17 +180,39 @@ elif selectedTab == "Team Stats":
             data = response['response'][0]
             teamWins.append(data['win']['total'])
 
-        my_chart = pd.DataFrame(
-            data={
-                'Wins': teamWins
-            },
-            index=teamSeasons
-        )
-        st.line_chart(my_chart)
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.image(teamImage[index], width=300)
+
+        with col2:
+            my_chart = pd.DataFrame(
+                data={
+                    'Wins': teamWins
+                },
+                index=teamSeasons
+            )
+            st.line_chart(my_chart)
+
+        with col3:
+                season = st.selectbox('Select Season', ('2022', '2021', '2020', '2019', '2018'))
+                querystring = {"id": id, "season": season}
+                response = requests.request("GET", "https://api-nba-v1.p.rapidapi.com/teams/statistics", headers=headers,
+                                            params=querystring).json()
+                data = response['response'][0]
+                st.write("Games played:", data['games'])
+                st.write("Points:", data['points'])
+                st.write("Off Rebounds:", data['offReb'])
+                st.write("Def Rebounds:", data['defReb'])
+                st.write("Total Rebounds:", data['totReb'])
+                st.write("Assists:", data['assists'])
+                st.write("Steals:", data['steals'])
+                st.write("Blocks:", data['blocks'])
+
+
 
         st.info('Season 2022 win totals are not final', icon="ℹ")
 
-# Find your team Section
+# Find your Team Tab
 else:
     st.subheader("Find Your Team")
     favTeam = ""
@@ -221,7 +237,7 @@ else:
 
     beachSlider = st.slider('From 1 to 5. How much would you enjoy an afternoon at the beach?', 0, 5, 2)
 
-    # All the options for the quiz
+    # Options for the quiz
     if 4 <= beachSlider <= 5:
         if skill == "Dunks":
             if teamType == "Underdogs":
@@ -263,3 +279,4 @@ else:
     if st.button('Finish Quiz'):
         st.success('Quiz Completed!', icon="✅")
         st.write("Congrats", name, "!   Your Favorite Team should be the", favTeam)
+        st.balloons()
