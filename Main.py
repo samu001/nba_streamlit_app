@@ -162,8 +162,11 @@ elif selectedTab == "Team Stats":
         teamId.append(data[i]['team']['id'])
         teamImage.append(data[i]['team']['logo'])
 
+    teamNames.sort()
+
     # Get the index of the selected item
     index = st.selectbox("Select a Team", range(len(teamNames)), format_func=lambda x: teamNames[x])
+
 
     # ID for the API call
     id = index + 1
